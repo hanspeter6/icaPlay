@@ -23,10 +23,10 @@ my_Amari(A, W)
 
 Amari's Error provides a measure of the distance between the inverse of the mixing matrix A and the estimated unmixing matrix W.
 
-This function implements the description found in
-\cite{Sorensen, J. 2008. An Assessment of Hermite Function Based Approximations of Mutual Information Applied to Independent Component Analysis. Entropy Volume 10 pp 745-756}
+%This function implements the description found in
+%\cite{Sorensen, J. 2008. An Assessment of Hermite Function Based Approximations of Mutual Information Applied to Independent Component Analysis. Entropy Volume 10 pp 745-756}
 
-This description references \cite{Amari S.,Chichochi A., Yank H.H. 1996. A new learning algorithm for blind signal separation. Advances in Neural Information Processing Systems. Volume 8, pp 757-763}
+%This description references \cite{Amari S.,Chichochi A., Yank H.H. 1996. A new learning algorithm for blind signal separation. Advances in Neural Information Processing Systems. Volume 8, pp 757-763}
 
 }
 %%  ~~ If necessary, more details than the description above ~~
