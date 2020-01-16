@@ -1,7 +1,7 @@
-\name{my_Amari.Rd}
-\alias{my_Amari.Rd}
+\name{my_Amari}
+\alias{my_Amari}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{ This is my Amari Function
+\title{ This is my Amari Function version 34
 %%  ~~function to do ... ~~
 }
 \description{ Its pretty cute
