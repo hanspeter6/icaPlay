@@ -6,32 +6,57 @@
 kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
   
   # source additional functions
-  source("my_Whiten.R")
+  # basic ZCA whitening function: X, datamatrix with rows observations and columns variables
+  # assume square and positive definite covariance matrix
+  
+  whiten <- function(x) {
+    
+    #center the variables
+    x_centered <- apply(x, 2, function(x) {x - mean(x)})
+    
+    # determine the covariance matrix
+    cvx <- cov(x_centered)
+    
+    # determine eigen vectors and values
+    eigens <- eigen(cvx)
+    
+    # determine the components of Eigen Decomposition
+    E <- eigens$vectors
+    D_invsqrt <- diag(1/sqrt(eigens$values))
+    
+    # determine the whitening matrix
+    myBasicWhiteningMatrix <- E %*% D_invsqrt %*% t(E) # compares with ZCA method in package
+    
+    # the whitened dataset
+    myBasicWhiteningMatrix %*% t(x_centered)
+    
+  }
   
   # a function to normalise a vector
   norm_vec <- function(x) {sqrt(sum(x^2))}
   
-  # gradient of absolute value of the kurtosis p177 equation 8 .14
+  # Estimating the gradient of absolute value of the kurtosis p177 equation 8 .14
   kurt_grad <- function(wi, z) {
     
     m <- nrow(z)
     y <- wi %*% z
     y3 <- y^3
     yy3 <- matrix(rep(y3,m), nrow = m, byrow = TRUE)
-    rowMeans(z * yy3)
+    rowMeans(z * yy3) - (3 * wi)
     
   }
 
   # initialsing variables
   m <- nrow(x)                         # number of components/sources/mixtures (for now the same thing)
   n <- ncol(x)                         # number of observations
-  z <- my_Whiten(t(x))$z                  # whiten my mixtures
+  z <- whiten(t(x))                 # whiten my mixtures
   w <- init.w/norm_vec(init.w)         # initial unmixing matrix
   iters <- max.iters                   # maximum iterations
   
   # initialising containers
   ws <- vector("list", m)
   thetas <- vector("list", m)
+  ks <- vector("list", m)
   is <- vector()
   
   # deflationary algorithm, extracting componentwise and maintaining orthogonolisation
@@ -39,6 +64,8 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
     
     wp <- w[p,]
     theta_vector <- vector()
+    ws_vector <- vector("list")
+    ks_vector <- vector()
     
     # iterations to convergence for each component
     i <- 1
@@ -48,9 +75,7 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
       
       k <- mean(y^4) - 3        # measuring kurtosis
       
-      g <- kurt_grad(wp, z)     # calculate gradient of kurtosis ????
-      
-      wp <- g - 3 * wp          # update ????
+      wp <- kurt_grad(wp, z)    # update with the estimated gradient
       
       # GS Orthogonalization
       if(p > 1) {
@@ -70,11 +95,13 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
       wp <- wp/norm_vec(wp)
       
       # angle between previous and current wp and collect them in a vector
-      val <- wp %*% w[p,]/(length(wp) * length(w[p,]))
+      val <- sum(wp*w[p,]) / ( sqrt(sum(wp * wp)) * sqrt(sum(w[p,] * w[p,])) )
       theta <- acos(round(val,6)) # needed to round to deal with NaN produced by floats when arg is -1
-      theta_vector[i] <- theta
+      theta_vector[i] <- theta   # collecting thetas by 
+      ks_vector[i] <- k           # note. Not abs()
+      ws_vector[[i]] <- wp
 
-      # updating W and iteration container
+      # updating W and other containers
       w[p,] <- wp
       is[p] <- i
       
@@ -87,17 +114,21 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
     }
     
     # collecting final W (unmixing matrix) for each component. Last item is final W of the algorithm
-    ws[[p]] <- w
+    ws[[p]] <- ws_vector
     # collecting thetas
     thetas[[p]] <- theta_vector
+    ks[[p]] <- ks_vector
     
   }
   
   #identify a list of desired output objects
   out <- list(ws = ws,              # the W matrices after each component has been identified
-              W = ws[[m]],          # the final estimated unmixing matrix W
-              S = ws[[m]] %*% z,       # the signals in mxn matrix
+              W = w,          # the final estimated unmixing matrix W
+              S = w %*% z,    # the signals in mxn matrix
               thetas = thetas,      # angles
+              ks = ks,             # kurtosis
               iters = is)           # iterations per deflation
   
 }
+
+
