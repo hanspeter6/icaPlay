@@ -5,13 +5,32 @@
 
 negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-4) {
   
-  # source additional functions
-  source("my_Whiten.R")
+  ## additional functions
   
-  # expressions of gs
-  g1 <- expression(tanh(a1 * y))
-  g2 <- expression(y * exp(-y^2/2))
-  g3 <- expression(y^3)
+  # basic ZCA whitening function: X, datamatrix with rows observations and columns variables
+  # assume square and positive definite covariance matrix
+  whiten <- function(x) {
+    
+    #center the variables
+    x_centered <- apply(x, 2, function(x) {x - mean(x)})
+    
+    # determine the covariance matrix
+    cvx <- cov(x_centered)
+    
+    # determine eigen vectors and values
+    eigens <- eigen(cvx)
+    
+    # determine the components of Eigen Decomposition
+    E <- eigens$vectors
+    D_invsqrt <- diag(1/sqrt(eigens$values))
+    
+    # determine the whitening matrix
+    myBasicWhiteningMatrix <- E %*% D_invsqrt %*% t(E) # compares with ZCA method in package
+    
+    # the whitened dataset
+    myBasicWhiteningMatrix %*% t(x_centered)
+    
+  }
   
   # a function to normalise a vector
   norm_vec <- function(x) {sqrt(sum(x^2))}
@@ -26,7 +45,7 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
     
     f <- function(y, g, a1) {eval( g[[1]] )} # identify the necessary g as a function from expression
     
-    gy <- f(y, g, a1) # g(w'z) / g(y)
+    gy <- f(y, g, a1) # g(w'z) or g(y)
     
     dg <- D(g, 'y') # g'(y)
     
@@ -36,11 +55,16 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
     
   }
   
+  # expressions of gs
+  g1 <- expression(tanh(a1 * y))
+  g2 <- expression(y * exp(-y^2/2))
+  g3 <- expression(y^3)
+  
   # initialsing variables
   m <- nrow(x)                         # number of components/sources/mixtures (for now the same thing)
   n <- ncol(x)                         # number of observations
-  z <- my_Whiten(t(x))$z                  # whiten my mixtures
-  w <- init.w/norm_vec(init.w)         # initial unmixing matrix
+  z <- whiten(t(x))                    # whiten my mixtures
+  w <- init.w/norm_vec(init.w)         # initial unmixing matrix normalised
   iters <- max.iters                   # maximum iterations
   
   # initialising containers
@@ -53,14 +77,15 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
     
     wp <- w[p,]
     theta_vector <- vector()
+    ws_vector <- vector("list")
     
     # iterations to convergence for each component
     i <- 1
     repeat {
       
-      y <- wp %*% z             # estimated signal vector
+      y <- wp %*% z                    # estimated signal vector
       
-      wp <- negent(wp, z, g2, a1 = 1) # estimate update of unmixing vector
+      wp <- negent(wp, z, g2, a1 = 1)  # estimate update of unmixing vector
       
       # GS Orthogonalization
       if(p > 1) {
@@ -80,9 +105,10 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
       wp <- wp/norm_vec(wp)
       
       # angle between previous and current wp and collect them in a vector
-      val <- wp %*% w[p,]/(length(wp) * length(w[p,]))
-      theta <- acos(round(val,6)) # needed to round to deal with NaN produced by floats when arg is -1
-      theta_vector[i] <- theta
+      val <- sum(wp*w[p,]) / ( sqrt(sum(wp * wp)) * sqrt(sum(w[p,] * w[p,])) )  # expression inside acos
+      theta <- acos(round(val,6))                # needed to round to deal with NaN produced by floats when arg is -1
+      theta_vector[i] <- theta                   # collecting thetas by 
+      ws_vector[[i]] <- wp
       
       # updating W and iteration container
       w[p,] <- wp
@@ -97,7 +123,8 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
     }
     
     # collecting final W (unmixing matrix) for each component. Last item is final W of the algorithm
-    ws[[p]] <- w
+    ws[[p]] <- ws_vector
+    
     # collecting thetas
     thetas[[p]] <- theta_vector
     
@@ -105,9 +132,27 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
   
   #identify a list of desired output objects
   out <- list(ws = ws,              # the W matrices after each component has been identified
-              W = ws[[m]],          # the final estimated unmixing matrix W
-              S = ws[[m]] %*% z,       # the signals in mxn matrix
+              W = w,          # the final estimated unmixing matrix W
+              S = w %*% z,       # the signals in mxn matrix
               thetas = thetas,      # angles
               iters = is)           # iterations per deflation
   
 }
+
+library(rmutil)
+s <- rbind(runif(1000), rlaplace(1000), rnorm(100))
+a <- matrix(runif(9), nrow = 3)
+x <- a %*% s
+
+out <- negentropyICA(x)
+
+par(mfrow = c(3,3))
+plot(density(s[1,]), main = "signal 1")
+plot(density(s[2,]), main = "signal 2")
+plot(density(s[3,]), main = "signal 3")
+plot(density(x[1,]), main = "mixture 1")
+plot(density(x[2,]), main = "mixture 2")
+plot(density(x[3,]), main = "mixture 3")
+plot(density(out$S[1,]), main = "Indep. Comp. 1")
+plot(density(out$S[2,]), main = "Indep. Comp. 2")
+plot(density(out$S[3,]), main = "Indep. Comp. 3")

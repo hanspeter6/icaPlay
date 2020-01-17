@@ -5,7 +5,6 @@
 
 kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
   
-  # source additional functions
   # basic ZCA whitening function: X, datamatrix with rows observations and columns variables
   # assume square and positive definite covariance matrix
   
@@ -49,8 +48,8 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
   # initialsing variables
   m <- nrow(x)                         # number of components/sources/mixtures (for now the same thing)
   n <- ncol(x)                         # number of observations
-  z <- whiten(t(x))                 # whiten my mixtures
-  w <- init.w/norm_vec(init.w)         # initial unmixing matrix
+  z <- whiten(t(x))                    # whiten my mixtures
+  w <- init.w/norm_vec(init.w)         # initial unmixing matrix normalised
   iters <- max.iters                   # maximum iterations
   
   # initialising containers
@@ -95,11 +94,11 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
       wp <- wp/norm_vec(wp)
       
       # angle between previous and current wp and collect them in a vector
-      val <- sum(wp*w[p,]) / ( sqrt(sum(wp * wp)) * sqrt(sum(w[p,] * w[p,])) )
-      theta <- acos(round(val,6)) # needed to round to deal with NaN produced by floats when arg is -1
-      theta_vector[i] <- theta   # collecting thetas by 
-      ks_vector[i] <- k           # note. Not abs()
-      ws_vector[[i]] <- wp
+      val <- sum(wp*w[p,]) / ( sqrt(sum(wp * wp)) * sqrt(sum(w[p,] * w[p,])) )  # expression inside acos
+      theta <- acos(round(val,6))                # needed to round to deal with NaN produced by floats when arg is -1
+      theta_vector[i] <- theta                   # collecting thetas by 
+      ks_vector[i] <- k                          # note. Not abs(k)
+      ws_vector[[i]] <- wp                       # collecing each iteration w
 
       # updating W and other containers
       w[p,] <- wp
@@ -115,8 +114,11 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
     
     # collecting final W (unmixing matrix) for each component. Last item is final W of the algorithm
     ws[[p]] <- ws_vector
+    
     # collecting thetas
     thetas[[p]] <- theta_vector
+    
+    # collecting kurtosis
     ks[[p]] <- ks_vector
     
   }

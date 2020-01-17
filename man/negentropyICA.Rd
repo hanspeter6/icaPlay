@@ -1,18 +1,22 @@
-\name{kurtosisICA}
-\alias{kurtosisICA}
+\name{negentropyICA}
+\alias{negentropyICA}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Fixed-point algorithm using kurtosis
+\title{Fixed-point algorithm based on negentropy
 %%  ~~function to do ... ~~
 }
-\description{A deflationary fixed-point algorithm to estimate an unmixing matrix using kurtosis.
+\description{A deflationary fixed-point algorithm to estimate an unmixing matrix based on negentropy.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
-\usage{kurtosisICA(x,max.iters = 10,init.w = diag(m),tol = 1e-04)
+\usage{
+negentropyICA(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-04)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{A mixture set with variables in rows and observations in columns.
 %%     ~~Describe \code{x} here~~
+}
+  \item{g}{One of g1, g2 or g3. Default = g2. See details for more information.
+%%     ~~Describe \code{g} here~~
 }
   \item{max.iters}{The maximum number of iterations. Default = 10.
 %%     ~~Describe \code{max.iters} here~~
@@ -24,18 +28,19 @@
 %%     ~~Describe \code{tol} here~~
 }
 }
-\details{This fixed-point algorithm using the absolute value of kurtosis is an implementation of the deflationary algorithm described in section 8.3.5 in \cite{Hyvarinen, Karunen and Oja.2001. Independent Component Analysis}.
+\details{This fixed-point algorithm using approximations of negentropy is an implementation of the deflationary algorithm described in \cite{Hyvarinen, Karunen and Oja.2001. Independent Component Analysis}
 
-More specifically this is the implementation of iteration equation 8.20 on page 178 and the algorithm indicated in section 8.4.2 page 194.
+More specifically this is the implementation of iteration equation 8.43 on page 189 and the algorithm indicated in section 8.4.2 page 194.
+
+The three options for the non-quadratic function \eqn{g} are \eqn{g1 = tanh(a1y)}; \eqn{g2 = yexp(-y^2/2)} and \eqn{g3 = y^3}. The last equates to the use of kurtosis.
 
 The unmixing matrix is normalised throughout and the data is whitened in a pre-processing step.}
-%%  ~~ If necessary, more details than the description above ~~
+
 \value{
 \item{ws}{A list per component of unmixing matrices by iteration}
 \item{W}{The final converged estimated unmixing matrix}
 \item{S}{The estimated components by row with observations by column}
 \item{thetas}{A list per componenty of angles between subsequent estimates of W}
-\item{ks}{A list per component of kurtosis}
 \item{iters}{The iterations to convergence for each component}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
@@ -43,7 +48,7 @@ The unmixing matrix is normalised throughout and the data is whitened in a pre-p
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
 }
-\references{See details.
+\references{See details
 %% ~put references to the literature/web site here ~
 }
 \author{Hans-Peter Bakker
@@ -60,33 +65,48 @@ The unmixing matrix is normalised throughout and the data is whitened in a pre-p
 }
 \examples{
 library(rmutil)
-s <- rbind(runif(1000), rlaplace(1000))
-a <- matrix(runif(4), nrow = 2)
+s <- rbind(runif(1000), rlaplace(1000), rnorm(100))
+a <- matrix(runif(9), nrow = 3)
 x <- a %*% s
 
-out <- kurtosisICA(x)
+out <- negentropyICA(x)
 
-par(mfrow = c(3,2))
+par(mfrow = c(3,3))
 plot(density(s[1,]), main = "signal 1")
 plot(density(s[2,]), main = "signal 2")
+plot(density(s[3,]), main = "signal 3")
 plot(density(x[1,]), main = "mixture 1")
 plot(density(x[2,]), main = "mixture 2")
+plot(density(x[3,]), main = "mixture 3")
 plot(density(out$S[1,]), main = "Indep. Comp. 1")
 plot(density(out$S[2,]), main = "Indep. Comp. 2")
+plot(density(out$S[3,]), main = "Indep. Comp. 3")
+
+##---- Should be DIRECTLY executable !! ----
+##-- ==>  Define data, use random,
+##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (x, max.iters = 10, init.w = diag(m), tol = 1e-04) 
+function (x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-04) 
 {
     source("my_Whiten.R")
+    g1 <- expression(tanh(a1 * y))
+    g2 <- expression(y * exp(-y^2/2))
+    g3 <- expression(y^3)
     norm_vec <- function(x) {
         sqrt(sum(x^2))
     }
-    kurt_grad <- function(wi, z) {
+    negent <- function(wi, z, g, a1 = 1) {
         m <- nrow(z)
         y <- wi \%*\% z
-        y3 <- y^3
-        yy3 <- matrix(rep(y3, m), nrow = m, byrow = TRUE)
-        rowMeans(z * yy3)
+        f <- function(y, g, a1) {
+            eval(g[[1]])
+        }
+        gy <- f(y, g, a1)
+        dg <- D(g, "y")
+        as.vector((rowMeans(z * matrix(rep(gy, m), byrow = TRUE, 
+            nrow = m)) - rowMeans(matrix(rep(eval(dg), m), byrow = TRUE, 
+            nrow = m)) * t(wi)))
     }
     m <- nrow(x)
     n <- ncol(x)
@@ -102,9 +122,7 @@ function (x, max.iters = 10, init.w = diag(m), tol = 1e-04)
         i <- 1
         repeat {
             y <- wp \%*\% z
-            k <- mean(y^4) - 3
-            g <- kurt_grad(wp, z)
-            wp <- g - 3 * wp
+            wp <- negent(wp, z, g2, a1 = 1)
             if (p > 1) {
                 terms <- matrix(rep(0, (p - 1) * m), ncol = m)
                 for (j in 1:(p - 1)) {
