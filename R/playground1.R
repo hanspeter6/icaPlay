@@ -2,6 +2,22 @@
 
 library(rmutil)
 
+# function for plotting
+pl_den <- function(obj, signals = s, mixes = x) {
+  
+  m <- nrow(signals)
+  par(mfrow = c(3,m), mar = c(1,1,1,1))
+  layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
+  
+  for(i in 1:m) {
+    
+    plot(density(signals[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    plot(density(mixes[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    plot(density(obj$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    
+  }
+}
+
 ## mix 1:
 m1 <- 2
 n1 <- 1000
@@ -24,44 +40,21 @@ a3 <- matrix(runif(m3^2), byrow = TRUE, nrow = m3)
 x3 <- a3 %*% s3
 
 ###### TRIALS
-# first id which mix, 
-a <- a2
-s <- s2
-x <- x2
-m <- m2
+# first id which mix 
+a <- a3
+s <- s3
+x <- x3
+m <- m3
 
+#
 k <- kurtosisICA(x) # kurtosis
-
-par(mfrow = c(3,m), mar = c(1,1,1,1))
-layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
-for(i in 1:m) {
-  plot(density(s[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-  plot(density(x[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-  plot(density(k$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-  
-}
-dev.off()
-
 ml <- maxLikeICA(x) # maximum liklihood
-par(mfrow = c(3,m), mar = c(1,1,1,1))
-layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
-for(i in 1:m) {
-  plot(density(s[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-  plot(density(x[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-  plot(density(ml$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-  
-}
-dev.off()
-
 neg <- negentropyICA(x) # negentropy
-par(mfrow = c(3,m), mar = c(1,1,1,1))
-layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
-for(i in 1:m) {
-  plot(density(s[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-  plot(density(x[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-  plot(density(neg$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-  
-}
+
+# plotting
+pl_den(ml, signals = s, mixes = x)
+pl_den(k, signals = s, mixes = x)
+pl_den(neg, signals = s, mixes = x)
 dev.off()
 
 # Amari Error comparisons
