@@ -19,7 +19,7 @@ my_Amari(A, W)
 %%     ~~Describe \code{W} here~~
 }
 }
-\details{ This is an implementation of the algorithm found in \cite{Sorensen, J. 2008. An assessment of hermite function based approximations of mutual information applied to independent component analysis. entropy. Vol. 10. pp745-756}
+\details{ This is an implementation of the algorithm found in \cite{Sorensen, J. 2008. An Assessment of Hermite Function-based Approximations of Mutual Information Applied to Independent Component Analysis. Entropy. Vol. 10. pp745-756}
 
 \cite{Sorensen, 2008} cites \cite{Amari et al. 1996} for the expression.
 %%  ~~ If necessary, more details than the description above ~~

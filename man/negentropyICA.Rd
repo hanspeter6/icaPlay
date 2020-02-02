@@ -30,18 +30,18 @@ negentropyICA(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-04)
 }
 \details{This fixed-point algorithm using approximations of negentropy is an implementation of the deflationary algorithm described in \cite{Hyvarinen, Karunen and Oja.2001. Independent Component Analysis}
 
-More specifically this is the implementation of iteration equation 8.43 on page 189 and the algorithm indicated in section 8.4.2 page 194.
+More specifically this is the implementation of iteration equation 8.43 on page 189 and the algorithm indicated in section 8.4.2 on page 194.
 
 The three options for the non-quadratic function \eqn{g} are \eqn{g1 = tanh(a1y)}; \eqn{g2 = yexp(-y^2/2)} and \eqn{g3 = y^3}. The last equates to the use of kurtosis.
 
 The unmixing matrix is normalised throughout and the data is whitened in a pre-processing step.}
 
 \value{
-\item{ws}{A list per component of unmixing matrices by iteration}
-\item{W}{The final converged estimated unmixing matrix}
+\item{ws}{A list per estimated independent component of unmixing matrices by iteration}
+\item{W}{The final converged estimate of the unmixing matrix}
 \item{S}{The estimated components by row with observations by column}
-\item{thetas}{A list per componenty of angles between subsequent estimates of W}
-\item{iters}{The iterations to convergence for each component}
+\item{thetas}{A list per component of angles in radians between subsequent estimates of W}
+\item{iters}{The number of iterations to convergence for each component}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}

@@ -5,7 +5,28 @@
 maxLikeICA <- function(x, g = g, max.iters = 12, init.w = diag(m), tol = 1e-4) { # get back to vary g????
   
   # source additional functions
-  source("my_Whiten.R")
+  whiten <- function(x) {
+    
+    #center the variables
+    x_centered <- apply(x, 2, function(x) {x - mean(x)})
+    
+    # determine the covariance matrix
+    cvx <- cov(x_centered)
+    
+    # determine eigen vectors and values
+    eigens <- eigen(cvx)
+    
+    # determine the components of Eigen Decomposition
+    E <- eigens$vectors
+    D_invsqrt <- diag(1/sqrt(eigens$values))
+    
+    # determine the whitening matrix
+    myBasicWhiteningMatrix <- E %*% D_invsqrt %*% t(E) # compares with ZCA method in package
+    
+    # the whitened dataset
+    myBasicWhiteningMatrix %*% t(x_centered)
+    
+  }
   
   # expressions of gs
   g <- expression(tanh(y))
@@ -35,7 +56,7 @@ maxLikeICA <- function(x, g = g, max.iters = 12, init.w = diag(m), tol = 1e-4) {
   # initialsing variables
   m <- nrow(x)                              # number of components/sources/mixtures (for now the same thing)
   n <- ncol(x)                              # number of observations
-  z <- my_Whiten(t(x))$z                      # whiten the mixtures
+  z <- whiten(t(x))                      # whiten the mixtures
   w <- init.w / apply(init.w, 1, norm_vec)  # initial unmixing matrix (nb do norming!!!)
   iters <- max.iters                        # maximum iterations, normalised
    

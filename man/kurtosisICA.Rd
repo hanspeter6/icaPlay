@@ -7,7 +7,7 @@
 \description{A deflationary fixed-point algorithm to estimate an unmixing matrix using kurtosis.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
-\usage{kurtosisICA(x,max.iters = 10,init.w = diag(m),tol = 1e-04)
+\usage{kurtosisICA(x, max.iters = 10, init.w = diag(m), tol = 1e-04)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,7 +24,7 @@
 %%     ~~Describe \code{tol} here~~
 }
 }
-\details{This fixed-point algorithm using the absolute value of kurtosis is an implementation of the deflationary algorithm described in section 8.3.5 in \cite{Hyvarinen, Karunen and Oja.2001. Independent Component Analysis}.
+\details{This fixed-point algorithm using the absolute value of kurtosis is an implementation of the deflationary algorithm described in section 8.3.5 in \cite{Hyvarinen, Karunen and Oja. 2001. Independent Component Analysis}.
 
 More specifically this is the implementation of iteration equation 8.20 on page 178 and the algorithm indicated in section 8.4.2 page 194.
 
@@ -33,10 +33,10 @@ The unmixing matrix is normalised throughout and the data is whitened in a pre-p
 \value{
 \item{ws}{A list per component of unmixing matrices by iteration}
 \item{W}{The final converged estimated unmixing matrix}
-\item{S}{The estimated components by row with observations by column}
-\item{thetas}{A list per componenty of angles between subsequent estimates of W}
-\item{ks}{A list per component of kurtosis}
-\item{iters}{The iterations to convergence for each component}
+\item{S}{The estimated independent components by row with observations by column}
+\item{thetas}{A list per component of angles in radians between subsequent estimates of W}
+\item{ks}{A list per component of kurtosis per iteration}
+\item{iters}{The number of iterations to convergence for each component}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
@@ -133,5 +133,5 @@ function (x, max.iters = 10, init.w = diag(m), tol = 1e-04)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ ~ica }% use one of  RShowDoc("KEYWORDS")
+\keyword{ ~kurtosis }% __ONLY ONE__ keyword per line
