@@ -2,8 +2,6 @@
 
 library(rmutil)
 
-
-
 ## mix 1:
 m1 <- 2
 n1 <- 1000
@@ -18,44 +16,57 @@ s2 <- rbind(runif(n2), rlaplace(n2), rnorm(n2))
 a2 <- matrix(runif(m2^2), byrow = TRUE, nrow = m2)
 x2 <- a2 %*% s2
 
+## mix 3:
+m3 <- 2
+n3 <- 1000
+s3 <- rbind(c(rlaplace(500, m = -2), runif(500)), c(runif(1000)))
+a3 <- matrix(runif(m3^2), byrow = TRUE, nrow = m3)
+x3 <- a3 %*% s3
+
 ###### TRIALS
+# first id which mix, 
+a <- a2
+s <- s2
+x <- x2
+m <- m2
 
-k <- kurtosisICA(x1) # kurtosis
-par(mfrow = c(3,2), mar = c(1,1,1,1))
+k <- kurtosisICA(x) # kurtosis
 
-plot(density(s1[1,]), main = "Source 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "", cex = 0.1) 
-plot(density(s1[2,]), main = "Source 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(x1[1,]), main = "Mix 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(x1[2,]), main = "Mix 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(k$S[1,]), main = "IC 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(k$S[2,]), main = "IC 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+par(mfrow = c(3,m), mar = c(1,1,1,1))
+layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
+for(i in 1:m) {
+  plot(density(s[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+  plot(density(x[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+  plot(density(k$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+  
+}
 dev.off()
 
-ml <- maxLikeICA(x1) # maximum liklihood
-par(mfrow = c(3,2), mar = c(1,1,1,1))
-
-plot(density(s1[1,]), main = "Source 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "", cex = 0.1) 
-plot(density(s1[2,]), main = "Source 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(x1[1,]), main = "Mix 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(x1[2,]), main = "Mix 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(ml$S[1,]), main = "IC 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(ml$S[2,]), main = "IC 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+ml <- maxLikeICA(x) # maximum liklihood
+par(mfrow = c(3,m), mar = c(1,1,1,1))
+layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
+for(i in 1:m) {
+  plot(density(s[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+  plot(density(x[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+  plot(density(ml$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+  
+}
 dev.off()
 
-
-neg <- negentropyICA(x1) # negentropy
-par(mfrow = c(3,2), mar = c(1,1,1,1))
-
-plot(density(s1[1,]), main = "Source 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "", cex = 0.1) 
-plot(density(s1[2,]), main = "Source 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(x1[1,]), main = "Mix 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(x1[2,]), main = "Mix 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(ml$S[1,]), main = "IC 1", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
-plot(density(ml$S[2,]), main = "IC 2", axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+neg <- negentropyICA(x) # negentropy
+par(mfrow = c(3,m), mar = c(1,1,1,1))
+layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
+for(i in 1:m) {
+  plot(density(s[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+  plot(density(x[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+  plot(density(neg$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "") 
+  
+}
 dev.off()
-
 
 # Amari Error comparisons
-my_Amari(solve(a1), k$W)
-my_Amari(solve(a1), ml$W)
-my_Amari(solve(a1), neg$W)
+my_Amari(solve(a), k$W)
+my_Amari(solve(a), ml$W)
+my_Amari(solve(a), neg$W)
+
+# more on stuff here....

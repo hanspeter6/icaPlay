@@ -139,20 +139,4 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
   
 }
 
-library(rmutil)
-s <- rbind(runif(1000), rlaplace(1000), rnorm(100))
-a <- matrix(runif(9), nrow = 3)
-x <- a %*% s
 
-out <- negentropyICA(x)
-
-par(mfrow = c(3,3))
-plot(density(s[1,]), main = "signal 1")
-plot(density(s[2,]), main = "signal 2")
-plot(density(s[3,]), main = "signal 3")
-plot(density(x[1,]), main = "mixture 1")
-plot(density(x[2,]), main = "mixture 2")
-plot(density(x[3,]), main = "mixture 3")
-plot(density(out$S[1,]), main = "Indep. Comp. 1")
-plot(density(out$S[2,]), main = "Indep. Comp. 2")
-plot(density(out$S[3,]), main = "Indep. Comp. 3")
