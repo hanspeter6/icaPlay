@@ -1,8 +1,9 @@
 ## Here I want to set up some random datasets to play with
 
-library(rmutil)
+library(rmutil) # simulate laplacian
+library(tuneR) # simualte wave forms
 
-# function for plotting
+# function for plotting matrix of densities
 pl_den <- function(obj, signals = s, mixes = x) {
   
   m <- nrow(signals)
@@ -17,7 +18,21 @@ pl_den <- function(obj, signals = s, mixes = x) {
     
   }
 }
-
+# function for plotting time series
+pl_ts <- function(obj, signals = s, mixes = x) {
+  
+  m <- nrow(signals)
+  par(mfrow = c(3,m), mar = c(1,1,1,1))
+  layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
+  
+  for(i in 1:m) {
+    
+    plot(ts(signals[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    plot(ts(mixes[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    plot(ts(obj$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    
+  }
+}
 ## mix 1:
 m1 <- 2
 n1 <- 1000
@@ -39,23 +54,40 @@ s3 <- rbind(c(rlaplace(500, m = -2), runif(500)), c(runif(1000)))
 a3 <- matrix(runif(m3^2), byrow = TRUE, nrow = m3)
 x3 <- a3 %*% s3
 
+## mix 4:
+m4 <- 4
+n4 <- 1000
+s4 <- rbind(sine(440, 1000)@left,
+            noise(duration = 1000)@left,
+            pulse(220, 1000)@left,
+            sine(550, 1000)@left * pulse(600, 1000)@left)
+a4 <- matrix(runif(m4^2), byrow = TRUE, nrow = m4)
+x4 <- a4 %*% s4 
+
 ###### TRIALS
 # first id which mix 
-a <- a3
-s <- s3
-x <- x3
-m <- m3
+a <- a4
+s <- s4
+x <- x4
+m <- m4
 
 #
 k <- kurtosisICA(x) # kurtosis
 ml <- maxLikeICA(x) # maximum liklihood
 neg <- negentropyICA(x) # negentropy
 
-# plotting
+# plotting for densities
 pl_den(ml, signals = s, mixes = x)
 pl_den(k, signals = s, mixes = x)
 pl_den(neg, signals = s, mixes = x)
 dev.off()
+
+#plotting for timeseries
+pl_ts(ml, signals = s, mixes = x)
+pl_ts(k, signals = s, mixes = x)
+pl_ts(neg, signals = s, mixes = x)
+dev.off()
+
 
 # Amari Error comparisons
 my_Amari(solve(a), k$W)
