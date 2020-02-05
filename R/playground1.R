@@ -3,8 +3,13 @@
 library(rmutil) # simulate laplacian
 library(tuneR) # simualte wave forms
 
-# function for plotting matrix of densities
-pl_den <- function(obj, signals = s, mixes = x) {
+source("R/kurtosisICA.R")
+source("R/maxLikeICA.R")
+source("R/negentropyICA.R")
+source("R/my_Amari.R")
+
+# function for plotting matrix of densities (default) or time series (ts)
+plots <- function(obj, signals = s, mixes = x, type = c( density, ts)) {
   
   m <- nrow(signals)
   par(mfrow = c(3,m), mar = c(1,1,1,1))
@@ -12,27 +17,28 @@ pl_den <- function(obj, signals = s, mixes = x) {
   
   for(i in 1:m) {
     
-    plot(density(signals[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-    plot(density(mixes[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-    plot(density(obj$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    plot(type(signals[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    plot(type(mixes[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+    plot(type(obj$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
     
   }
 }
-# function for plotting time series
-pl_ts <- function(obj, signals = s, mixes = x) {
-  
-  m <- nrow(signals)
-  par(mfrow = c(3,m), mar = c(1,1,1,1))
-  layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
-  
-  for(i in 1:m) {
-    
-    plot(ts(signals[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-    plot(ts(mixes[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-    plot(ts(obj$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
-    
-  }
-}
+# # function for plotting time series
+# pl_ts <- function(obj, signals = s, mixes = x) {
+#   
+#   m <- nrow(signals)
+#   par(mfrow = c(3,m), mar = c(1,1,1,1))
+#   layout(matrix(c(1:(3*m)), ncol = m, byrow = FALSE))
+#   
+#   for(i in 1:m) {
+#     
+#     plot(ts(signals[i,]), main = paste("Source", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+#     plot(ts(mixes[i,]), main = paste("Mix", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+#     plot(ts(obj$S[i,]), main = paste("IC", i), axes = FALSE, frame.plot = TRUE, xlab = "", ylab = "")
+#     
+#   }
+# }
+
 ## mix 1:
 m1 <- 2
 n1 <- 1000
@@ -65,11 +71,11 @@ a4 <- matrix(runif(m4^2), byrow = TRUE, nrow = m4)
 x4 <- a4 %*% s4 
 
 ###### TRIALS
-# first id which mix 
-a <- a4
-s <- s4
-x <- x4
-m <- m4
+# first id which mix (1-4)
+a <- a1
+s <- s1
+x <- x1
+m <- m1
 
 #
 k <- kurtosisICA(x) # kurtosis
@@ -77,15 +83,15 @@ ml <- maxLikeICA(x) # maximum liklihood
 neg <- negentropyICA(x) # negentropy
 
 # plotting for densities
-pl_den(ml, signals = s, mixes = x)
-pl_den(k, signals = s, mixes = x)
-pl_den(neg, signals = s, mixes = x)
+plots(ml, signals = s, mixes = x, type = density)
+plots(k, signals = s, mixes = x, type = density)
+plots(neg, signals = s, mixes = x, type = density)
 dev.off()
 
 #plotting for timeseries
-pl_ts(ml, signals = s, mixes = x)
-pl_ts(k, signals = s, mixes = x)
-pl_ts(neg, signals = s, mixes = x)
+plots(ml, signals = s, mixes = x, type = ts)
+plots(k, signals = s, mixes = x, type = ts)
+plots(neg, signals = s, mixes = x, type = ts)
 dev.off()
 
 
@@ -94,4 +100,7 @@ my_Amari(solve(a), k$W)
 my_Amari(solve(a), ml$W)
 my_Amari(solve(a), neg$W)
 
-# more on stuff here....
+# more on stuff here....like signal to noise ...
+
+# plots to consider convergences...
+
