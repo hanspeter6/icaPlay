@@ -1,9 +1,8 @@
-## Kurtosis-based Fixed Iteration algorithm to extract signals by deflation:
-# Source: hyvarinen book 2001 (proper citation required here.)
+## Anderson-Darling-based (Fixed Iteration) algorithm to extract signals by deflation:
+# Source: Razali et al, 2011
 # Using deflationary orthogonolisation as in Section 8.4.2 (p194)
-# with iteration for one-unit algorithm based on equation 8.20 (p178)
 
-kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
+adICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
   
   # basic ZCA whitening function: X, datamatrix with rows observations and columns variables
   # assume square and positive definite covariance matrix
@@ -34,17 +33,55 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
   # a function to normalise a vector
   norm_vec <- function(x) {sqrt(sum(x^2))}
   
-  # Implementing the fast fixed-point algorithm for kurtosis on p178 equation 8 .20
-  kurt_grad <- function(wi, z) {
+  # My experimental algorithm
+  ad_grad <- function(wi, z) {
+    
+    require(dplyr)
     
     m <- nrow(z)
-    y <- wi %*% z
-    y3 <- y^3
-    yy3 <- matrix(rep(y3,m), nrow = m, byrow = TRUE)
-    rowMeans(z * yy3) - (3 * wi)
+    
+    y <- as.vector(wi %*% z)
+    
+    yden <- dnorm(y) # stanard normal density of y
+    ycum <- pnorm(y) # standard normal distribution of y
+    alp <- yden/ycum # 
+    bet <- yden/(1 - ycum) #
+    lhs <- matrix(rep(alp, m), byrow = TRUE, nrow = m) * z
+    rhs <- matrix(rep(bet, m), byrow = TRUE, nrow = m) * z
+    fin <- lhs - t(apply(rhs, 1, rev))
+    rowMeans(fin)
+    # 
+    # 
+    # 
+    # 
+    # mat <- as_tibble(t(rbind(y = y, z1 = z[1,], z2 = z[2,], z3 = z[3,] )))
+    # 
+    # mat_fin <- mat %>%
+    #   arrange(y)  %>%
+    #   mutate(y_rev = rev(y)) %>%
+    #   mutate(z1_rev = rev(z1)) %>%
+    #   mutate(z2_rev = rev(z2)) %>%
+    #   mutate(z3_rev = rev(z3)) %>%
+    #   mutate(den_y = dnorm(y)) %>%
+    #   mutate(dist_y = pnorm(y)) %>%
+    #   mutate(alpha = den_y/dist_y) %>%
+    #   mutate(den_y_rev = dnorm(y_rev)) %>%
+    #   mutate(dist_y_rev = pnorm(y_rev)) %>%
+    #   mutate(beta = den_y_rev/(1-dist_y_rev)) %>%
+    #   mutate(lhs1 = alpha * z1) %>%
+    #   mutate(lhs2 = alpha * z2) %>%
+    #   mutate(lhs3 = alpha * z3) %>%
+    #   mutate(rhs1 = beta * z1_rev) %>%
+    #   mutate(rhs2 = beta * z2_rev) %>%
+    #   mutate(rhs3 = beta * z3_rev) %>%
+    #   mutate(fin1 = lhs1 - rhs1) %>%
+    #   mutate(fin2 = lhs2 - rhs2) %>%
+    #   mutate(fin3 = lhs3 - rhs3)
+    # 
+    # with(mat_fin, c(mean(fin1), mean(fin2), mean(fin3)))
     
   }
-
+  
   # initialsing variables
   m <- nrow(x)                         # number of components/sources/mixtures (for now the same thing)
   n <- ncol(x)                         # number of observations
@@ -74,7 +111,7 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
       
       k <- mean(y^4) - 3        # measuring kurtosis
       
-      wp <- kurt_grad(wp, z)    # update with the estimated gradient
+      wp <- wp + 0.5 * ad_grad(wp, z)    # update with the estimated gradient with learning rate alpha = 1 for now
       
       # GS Orthogonalization
       if(p > 1) {
@@ -99,7 +136,7 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
       theta_vector[i] <- theta                   # collecting thetas by 
       ks_vector[i] <- k                          # note. Not abs(k)
       ws_vector[[i]] <- wp                       # collecing each iteration w
-
+      
       # updating W and other containers
       w[p,] <- wp
       is[p] <- i
@@ -132,5 +169,3 @@ kurtosisICA <- function(x, max.iters = 10, init.w = diag(m), tol = 1e-4) {
               iters = is)           # iterations per deflation
   
 }
-
-

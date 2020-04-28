@@ -7,6 +7,7 @@ source("R/kurtosisICA.R")
 source("R/maxLikeICA.R")
 source("R/negentropyICA.R")
 source("R/my_Amari.R")
+source("R/adICA.R")
 
 # function for plotting matrix of densities (default) or time series (ts)
 plots <- function(obj, signals = s, mixes = x, type = c( density, ts)) {
@@ -72,31 +73,35 @@ x4 <- a4 %*% s4
 
 ###### TRIALS
 # first id which mix (1-4)
-a <- a1
-s <- s1
-x <- x1
-m <- m1
+a <- a2
+s <- s2
+x <- x2
+m <- m2
 
 #
-k <- kurtosisICA(x) # kurtosis
-ml <- maxLikeICA(x) # maximum liklihood
-neg <- negentropyICA(x) # negentropy
+system.time(k <- kurtosisICA(x)) # kurtosis
+system.time(ad <- adICA(x, max.iters = 100)) # anderson-darling
+system.time(ml <- maxLikeICA(x)) # maximum liklihood
+system.time(neg <- negentropyICA(x)) # negentropy
 
 # plotting for densities
 plots(ml, signals = s, mixes = x, type = density)
 plots(k, signals = s, mixes = x, type = density)
+plots(ad, signals = s, mixes = x, type = density)
 plots(neg, signals = s, mixes = x, type = density)
 dev.off()
 
 #plotting for timeseries
 plots(ml, signals = s, mixes = x, type = ts)
 plots(k, signals = s, mixes = x, type = ts)
+plots(ad, signals = s, mixes = x, type = ts)
 plots(neg, signals = s, mixes = x, type = ts)
 dev.off()
 
 
 # Amari Error comparisons
 my_Amari(solve(a), k$W)
+my_Amari(solve(a), ad$W)
 my_Amari(solve(a), ml$W)
 my_Amari(solve(a), neg$W)
 
@@ -104,3 +109,5 @@ my_Amari(solve(a), neg$W)
 
 # plots to consider convergences...
 
+ad$iters
+k$iters

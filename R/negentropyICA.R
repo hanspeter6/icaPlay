@@ -1,12 +1,11 @@
 ## Negentropy-based Fixed Iteration algorithm to extract signals by deflation
 
-# Using deflationary orthogonolisation as in Section 8.4.2 (p194)
-# with iteration for one-unit algorithm based on equation 8.43 (p189)
+# Using deflationary orthogonolisation as in hyvarinen's book Section 8.4.2 (p194)
+# with iteration for one-unit algorithm based on the same book's equation 8.43 (p189)
 
 negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-4) {
   
   ## additional functions
-  
   # basic ZCA whitening function: X, datamatrix with rows observations and columns variables
   # assume square and positive definite covariance matrix
   whiten <- function(x) {
@@ -36,7 +35,7 @@ negentropyICA <- function(x, g = g2, max.iters = 10, init.w = diag(m), tol = 1e-
   norm_vec <- function(x) {sqrt(sum(x^2))}
   
   # a function based on negentropy
-  # the minimising function: fast fixed point algorithm 8.43
+  # the minimising function: fast fixed point algorithm 8.43 in hyvarinen's book
   negent <- function(wi, z, g, a1 = 1) {
     
     m <- nrow(z) # identify number of componets/sources
